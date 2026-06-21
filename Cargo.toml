@@ -1,0 +1,8 @@
+[package]
+name = "groth16"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hex = "0.4.3"
+cryptography = { path = "cryptography" }
