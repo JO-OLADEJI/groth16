@@ -1,3 +1,6 @@
 [submodule "cryptography"]
 	path = cryptography
 	url = https://github.com/JO-OLADEJI/cryptography.git
+[submodule "circomlib"]
+	path = circomlib
+	url = https://github.com/iden3/circomlib.git
