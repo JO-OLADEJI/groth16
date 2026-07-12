@@ -1,0 +1,54 @@
+NUL = Nullifier
+SECRET = Secret
+HASH-leaf = Leaf Hash (of prover)
+HASH-y = Leaf Hash of prover sibling
+HASH-2x = 1st level-2 hash
+HASH-2y = 2nd level-2 hash
+HASH-3x = 1st level-3 hash
+HASH-3y = 2nd level-3 hash
+ROOT = Merkle Root
+HASH-nul = Nullifier Hash
+
+According to R1CS: Output => Left • Right
+
+   OUTPUT                     LEFT        RIGHT
+--------------------------------------------------------
+1) HASH-leaf - (3 • SECRET) = NUL       * NUL
+2) HASH-2y - (3 • HASH-y)   = HASH-leaf * HASH-leaf
+3) HASH-3x - (3 • HASH-2y)  = HASH-2x   * HASH-2x
+4) ROOT - (3 • HASH-3y)     = HASH-3x   * HASH-3x
+5) HASH-nul                 = NUL       * NUL
+
+Witness = [1, NUL, SECRET, HASH-leaf, HASH-y, HASH-2x, HASH-2y, HASH-3x, HASH-3y, ROOT, HASH-nul]
+
+Witness = [
+    1,  //1,
+    47, //NUL,
+    78, //SECRET,
+    73, //HASH-leaf,
+    72, //HASH-y,
+    49, //HASH-2x,
+    15, //HASH-2y,
+    76, //HASH-3x,
+    44, //HASH-3y,
+    62, //ROOT,
+    76  //HASH-nul
+]
+
+Left =   [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+Right =  [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+Output = [[0, 0, -3, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, -3, 0, 1, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, -3, 1, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, -3, 1, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]

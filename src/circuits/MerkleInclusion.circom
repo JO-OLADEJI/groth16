@@ -10,10 +10,10 @@ template MerkleInclusion() {
      * 5: d-bit
      * 6: L₃ hash
      * 7: d-bit
-     * 8: merkle root
-     * 9: nullifier hash
      */
-    signal input in[10];
+    signal input in[8];
+    signal input merkleRoot;
+    signal input nullifierHash;
 
     component hashes[4];
     signal lFlags[4];
@@ -28,7 +28,7 @@ template MerkleInclusion() {
     var idx = 1;
 
     for (var i = 3; i <= 7; i += 2) {
-        // hash direction-bit constraints — {0, 1}
+        // hash direction-bit binary constraints — {0, 1}
         in[i] * (in[i] - 1) === 0;
 
         /*
@@ -58,11 +58,11 @@ template MerkleInclusion() {
     }
 
     // merkle root constraint
-    hashes[3].out === in[8];
+    hashes[3].out === merkleRoot;
 
     // nullifier hash constraint
     signal nHash <== Hash()(in[0], 0);
-    nHash === in[9];
+    nHash === nullifierHash;
 }
 
 template Hash() {
@@ -74,4 +74,4 @@ template Hash() {
     out <== cHash;
 }
 
-component main {public [in[8], in[9]]} = MerkleInclusion();
+component main {public [merkleRoot, nullifierHash]} = MerkleInclusion();

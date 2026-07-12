@@ -1,18 +1,29 @@
-use cryptography::exercises::{ec_point::Field, finite_field::Fp};
+pub mod maths;
+
+use cryptography::exercises::ec_point::Field;
+use cryptography::exercises::finite_field::Fp;
 use std::env;
 
+const ORDER: u32 = 79;
+
+// fn main() {
+//     let nullifier = Fp::new(47, ORDER).unwrap();
+//     println!("{:?}", nullifier * nullifier);
+// }
+
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    maths::matrix::main();
+    // let args: Vec<String> = env::args().collect();
 
-    let n = decode_arg(&args[1]);
-    let s = decode_arg(&args[2]);
+    // let n = decode_arg(&args[1]);
+    // let s = decode_arg(&args[2]);
 
-    let nullifier = Fp::new(n, 79).unwrap();
-    let secret = Fp::new(s, 79).unwrap();
-    let k = Fp::new(3, 79).unwrap();
+    // let nullifier = Fp::new(n, ORDER).unwrap();
+    // let secret = Fp::new(s, ORDER).unwrap();
+    // let k = Fp::new(3, ORDER).unwrap();
 
-    let hash = nullifier.pow(2) + k * secret;
-    println!("hash: 0x{}, {}", hex::encode(hash.num.to_be_bytes()), hash);
+    // let hash = nullifier.pow(2) + k * secret;
+    // println!("hash: 0x{}, {}", hex::encode(hash.num.to_be_bytes()), hash);
 }
 
 fn decode_arg(s: &String) -> i64 {
