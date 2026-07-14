@@ -1,9 +1,20 @@
 use crate::{
-    maths::lagrange::{lagrange_interpolate, poly_add, poly_scale},
-    snark::proof::{COLS, L, MODULUS, OUT, R, ROWS, WITNESS},
-    snark::r1cs::gf,
+    maths::lagrange::{
+        Literal, lagrange_interpolate, poly_add, poly_divide, poly_mul, poly_scale, poly_subtract,
+        print_polynomial,
+    },
+    snark::{
+        proof::{COLS, L, MODULUS, OUT, R, ROWS, WITNESS},
+        r1cs::gf,
+    },
 };
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
+
+impl Literal for Fp {
+    fn raw(&self) -> u32 {
+        self.num
+    }
+}
 
 pub fn main() {
     let l_matrix: [[Fp; COLS]; ROWS] = L.map(|row| row.map(|x| gf(x)));
@@ -47,8 +58,24 @@ pub fn main() {
     // and not hadamard product / multiplication.
     // See: https://rareskills.io/post/quadratic-arithmetic-program#polynomial-degree-imbalance
 
-    // NEXT: compute t(x) and h(x)
+    // compute all polynomials in `u(x) • v(x) − w(x) = h(x) • t(x)`
+    let mut t_poly: Vec<Fp> = vec![gf(-1), gf(1)];
+    for i in 1..ROWS {
+        t_poly = poly_mul(&t_poly, &vec![gf(-1 * (i as i64 + 1)), gf(1)])
+    }
 
-    // LAST: evaluate all on a random `τ`
+    let numerator = poly_subtract(&poly_mul(&u_poly, &v_poly), &w_poly);
+    let (h_poly, remainder) = poly_divide(&numerator, &t_poly);
+
+    assert!(remainder.iter().all(|&x| x.is_zero()));
+
+    println!("\nPolynomials");
+    println!("--------------------------------------------------------");
+    print_polynomial(&u_poly, "u(x)");
+    print_polynomial(&v_poly, "v(x)");
+    print_polynomial(&w_poly, "w(x)");
+    print_polynomial(&t_poly, "t(x)");
+    print_polynomial(&h_poly, "h(x)");
+
     let _tau = gf(23);
 }
