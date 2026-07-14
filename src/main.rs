@@ -1,46 +1,10 @@
 pub mod maths;
+pub mod problem;
+pub mod snark;
 
-use cryptography::exercises::ec_point::Field;
-use cryptography::exercises::finite_field::Fp;
-use std::env;
-
-const ORDER: u32 = 79;
-
-// fn main() {
-//     let nullifier = Fp::new(47, ORDER).unwrap();
-//     println!("{:?}", nullifier * nullifier);
-// }
+use crate::snark::{qap, r1cs};
 
 fn main() {
-    maths::matrix::main();
-    // let args: Vec<String> = env::args().collect();
-
-    // let n = decode_arg(&args[1]);
-    // let s = decode_arg(&args[2]);
-
-    // let nullifier = Fp::new(n, ORDER).unwrap();
-    // let secret = Fp::new(s, ORDER).unwrap();
-    // let k = Fp::new(3, ORDER).unwrap();
-
-    // let hash = nullifier.pow(2) + k * secret;
-    // println!("hash: 0x{}, {}", hex::encode(hash.num.to_be_bytes()), hash);
-}
-
-fn decode_arg(s: &String) -> i64 {
-    if s.starts_with("0x") {
-        let bytes: [u8; 8] = hex::decode(normalize(&s[2..])).unwrap().try_into().unwrap();
-        i64::from_be_bytes(bytes)
-    } else {
-        s.parse::<i64>().unwrap()
-    }
-}
-
-const TARGET_BYTE_LENGTH: usize = 16;
-
-fn normalize(s: &str) -> String {
-    if s.len() < TARGET_BYTE_LENGTH {
-        return format!("{}{}", "0".repeat(TARGET_BYTE_LENGTH - s.len()), s);
-    }
-
-    s[s.len() - TARGET_BYTE_LENGTH..].into()
+    r1cs::main();
+    qap::main();
 }
