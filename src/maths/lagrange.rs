@@ -1,4 +1,4 @@
-use crate::snark::proof::MODULUS;
+use crate::snark::proof::SUBGROUP_ORDER;
 use cryptography::exercises::ec_point::Field;
 
 pub trait Literal {
@@ -23,11 +23,19 @@ pub fn poly_mul<F: Field>(a: &[F], b: &[F]) -> Vec<F> {
 /// Add two polynomials.
 pub fn poly_add<F: Field>(a: &[F], b: &[F]) -> Vec<F> {
     let n = a.len().max(b.len());
-    let mut out = vec![F::zero(MODULUS); n];
+    let mut out = vec![F::zero(SUBGROUP_ORDER); n];
 
     for i in 0..n {
-        let ai = if i < a.len() { a[i] } else { F::zero(MODULUS) };
-        let bi = if i < b.len() { b[i] } else { F::zero(MODULUS) };
+        let ai = if i < a.len() {
+            a[i]
+        } else {
+            F::zero(SUBGROUP_ORDER)
+        };
+        let bi = if i < b.len() {
+            b[i]
+        } else {
+            F::zero(SUBGROUP_ORDER)
+        };
         out[i] = ai + bi;
     }
 
@@ -37,11 +45,19 @@ pub fn poly_add<F: Field>(a: &[F], b: &[F]) -> Vec<F> {
 /// Subtract two polynomials.
 pub fn poly_subtract<F: Field>(a: &[F], b: &[F]) -> Vec<F> {
     let n = a.len().max(b.len());
-    let mut out = vec![F::zero(MODULUS); n];
+    let mut out = vec![F::zero(SUBGROUP_ORDER); n];
 
     for i in 0..n {
-        let ai = if i < a.len() { a[i] } else { F::zero(MODULUS) };
-        let bi = if i < b.len() { b[i] } else { F::zero(MODULUS) };
+        let ai = if i < a.len() {
+            a[i]
+        } else {
+            F::zero(SUBGROUP_ORDER)
+        };
+        let bi = if i < b.len() {
+            b[i]
+        } else {
+            F::zero(SUBGROUP_ORDER)
+        };
         out[i] = ai - bi;
     }
 
@@ -63,7 +79,7 @@ fn trim_poly<F: Field>(poly: &mut Vec<F>) {
     }
 
     if poly.is_empty() {
-        poly.push(F::zero(MODULUS));
+        poly.push(F::zero(SUBGROUP_ORDER));
     }
 }
 
@@ -79,16 +95,16 @@ pub fn poly_divide<F: Field>(dividend: &[F], divisor: &[F]) -> (Vec<F>, Vec<F>) 
     let divisor_degree = poly_degree(divisor).expect("cannot divide by a zero polynomial");
 
     let Some(dividend_degree) = poly_degree(dividend) else {
-        return (vec![F::zero(MODULUS)], vec![F::zero(MODULUS)]);
+        return (vec![F::zero(SUBGROUP_ORDER)], vec![F::zero(SUBGROUP_ORDER)]);
     };
 
     if dividend_degree < divisor_degree {
         let mut remainder = dividend.to_vec();
         trim_poly(&mut remainder);
-        return (vec![F::zero(MODULUS)], remainder);
+        return (vec![F::zero(SUBGROUP_ORDER)], remainder);
     }
 
-    let mut quotient = vec![F::zero(MODULUS); dividend_degree - divisor_degree + 1];
+    let mut quotient = vec![F::zero(SUBGROUP_ORDER); dividend_degree - divisor_degree + 1];
     let mut remainder = dividend.to_vec();
     trim_poly(&mut remainder);
 
@@ -118,7 +134,7 @@ pub fn poly_divide<F: Field>(dividend: &[F], divisor: &[F]) -> (Vec<F>, Vec<F>) 
 
 /// Evaluate a polynomial
 pub fn poly_eval<F: Field>(poly: &[F], x: F) -> F {
-    let mut result = F::zero(MODULUS);
+    let mut result = F::zero(SUBGROUP_ORDER);
 
     for (exp, &value) in poly.iter().enumerate().rev() {
         if !value.is_zero() {
@@ -139,14 +155,14 @@ pub fn lagrange_interpolate<F: Field>(xs: &[F], ys: &[F]) -> Vec<F> {
     assert_eq!(xs.len(), ys.len());
     let n = xs.len();
 
-    let mut result = vec![F::zero(MODULUS); n];
+    let mut result = vec![F::zero(SUBGROUP_ORDER); n];
 
     for i in 0..n {
         // Numerator polynomial
-        let mut basis = vec![F::one(MODULUS)];
+        let mut basis = vec![F::one(SUBGROUP_ORDER)];
 
         // Denominator scalar
-        let mut denom = F::one(MODULUS);
+        let mut denom = F::one(SUBGROUP_ORDER);
 
         for j in 0..n {
             if i == j {
@@ -154,7 +170,10 @@ pub fn lagrange_interpolate<F: Field>(xs: &[F], ys: &[F]) -> Vec<F> {
             }
 
             // Multiply by (x - x_j)
-            basis = poly_mul(&basis, &[F::zero(MODULUS) - xs[j], F::one(MODULUS)]);
+            basis = poly_mul(
+                &basis,
+                &[F::zero(SUBGROUP_ORDER) - xs[j], F::one(SUBGROUP_ORDER)],
+            );
 
             denom = denom * (xs[i] - xs[j]);
         }
@@ -181,14 +200,14 @@ where
         let term = match degree {
             0 => format!("{}", coeff.raw()),
             1 => {
-                if coeff == F::one(MODULUS) {
+                if coeff == F::one(SUBGROUP_ORDER) {
                     "x".to_string()
                 } else {
                     format!("{}x", coeff.raw())
                 }
             }
             _ => {
-                if coeff == F::one(MODULUS) {
+                if coeff == F::one(SUBGROUP_ORDER) {
                     format!("x{}", to_superscript(degree))
                 } else {
                     format!("{}x{}", coeff.raw(), to_superscript(degree))

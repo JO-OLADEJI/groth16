@@ -4,8 +4,9 @@ use crate::{
         print_polynomial,
     },
     snark::{
-        proof::{COLS, L, MODULUS, OUT, R, ROWS, WITNESS},
+        proof::{COLS, L, OUT, R, ROWS, SUBGROUP_ORDER, WITNESS},
         r1cs::gf,
+        srs::generate_srs,
     },
 };
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
@@ -29,9 +30,9 @@ pub fn main() {
     let mut w_poly: Vec<Fp> = vec![];
 
     for col in 0..COLS {
-        let mut u: [Fp; ROWS] = [Fp::zero(MODULUS); ROWS];
-        let mut v: [Fp; ROWS] = [Fp::zero(MODULUS); ROWS];
-        let mut w: [Fp; ROWS] = [Fp::zero(MODULUS); ROWS];
+        let mut u: [Fp; ROWS] = [Fp::zero(SUBGROUP_ORDER); ROWS];
+        let mut v: [Fp; ROWS] = [Fp::zero(SUBGROUP_ORDER); ROWS];
+        let mut w: [Fp; ROWS] = [Fp::zero(SUBGROUP_ORDER); ROWS];
 
         for row in 0..ROWS {
             u[row] = l_matrix[row][col];
@@ -77,5 +78,11 @@ pub fn main() {
     print_polynomial(&t_poly, "t(x)");
     print_polynomial(&h_poly, "h(x)");
 
-    let _tau = gf(23);
+    let (srs_g1, srs_g2, srs_hx) =
+        generate_srs(u_poly.len() as u32 - 1, v_poly.len() as u32 - 1, &t_poly);
+
+    println!("\n");
+    println!("{:?}", srs_g1);
+    println!("{:?}", srs_g2);
+    println!("{:?}", srs_hx);
 }

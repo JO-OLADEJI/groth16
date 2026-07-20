@@ -1,4 +1,4 @@
-use crate::snark::proof::MODULUS;
+use crate::snark::proof::SUBGROUP_ORDER;
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
 use std::env;
 
@@ -10,9 +10,9 @@ pub fn main() {
     let n = decode_arg(&args[1]);
     let s = decode_arg(&args[2]);
 
-    let nullifier = Fp::new(n, MODULUS).unwrap();
-    let secret = Fp::new(s, MODULUS).unwrap();
-    let k = Fp::new(3, MODULUS).unwrap();
+    let nullifier = Fp::new(n, SUBGROUP_ORDER).unwrap();
+    let secret = Fp::new(s, SUBGROUP_ORDER).unwrap();
+    let k = Fp::new(3, SUBGROUP_ORDER).unwrap();
 
     let hash = nullifier.pow(2) + k * secret;
     println!("hash: 0x{}, {}", hex::encode(hash.num.to_be_bytes()), hash);

@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 hex = "0.4.3"
 cryptography = { path = "cryptography" }
+rand = "0.10.2"

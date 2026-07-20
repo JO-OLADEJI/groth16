@@ -9,7 +9,7 @@
 // G1 • (39, 54) — 𝔽157
 // G2 • (31 + 153α, 5 + 59α) — 𝔽157²
 
-use crate::snark::proof::{COLS, L, MODULUS, OUT, R, ROWS, WITNESS};
+use crate::snark::proof::{COLS, L, SUBGROUP_ORDER, OUT, R, ROWS, WITNESS};
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
 
 pub fn main() {
@@ -35,7 +35,7 @@ fn witness_mul<T>(vector: &[[T; COLS]; ROWS], witness: &[T; COLS]) -> [T; ROWS]
 where
     T: Field,
 {
-    let mut result: [T; ROWS] = [T::zero(MODULUS); ROWS];
+    let mut result: [T; ROWS] = [T::zero(SUBGROUP_ORDER); ROWS];
 
     for i in 0..result.len() {
         let sum = &mut result[i];
@@ -58,5 +58,5 @@ where
 }
 
 pub fn gf(value: i64) -> Fp {
-    Fp::new(value, MODULUS).unwrap()
+    Fp::new(value, SUBGROUP_ORDER).unwrap()
 }
