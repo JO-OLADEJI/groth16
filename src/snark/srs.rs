@@ -8,7 +8,7 @@ use cryptography::{
 use rand::RngExt;
 
 use crate::{
-    maths::lagrange::poly_eval,
+    maths::lagrange::{Literal, poly_eval},
     snark::{
         proof::{EC_POINT_MODULUS, EcCurve, SUBGROUP_ORDER},
         r1cs::gf as gf_subgroup,
@@ -27,7 +27,7 @@ pub fn generate_srs(
     #[allow(non_snake_case)]
     let (G1, G2) = get_default_generators();
 
-    // given QAP: `L(x) • R(x) − Out(x) = h(x) • t(x)`
+    // given QAP: `L(x) • R(x) = Out(x) + (h(x) • t(x))`
     // deg(L), deg(R), deg(Out) = n - 1
     // deg(t) = n
     // deg(h) = n - 2
@@ -42,20 +42,20 @@ pub fn generate_srs(
 
     for i in 0..r1cs_poly_max_terms {
         let scalar = tau.pow(i);
-        omega.push(G1.scalar_mul(scalar.num));
-        theta.push(G2.scalar_mul(scalar.num));
+        omega.push(G1.scalar_mul(scalar.raw()));
+        theta.push(G2.scalar_mul(scalar.raw()));
     }
 
     let tx_eval_tau = poly_eval(t_poly, tau);
     for i in 0..hx_max_terms {
         let scalar = tau.pow(i as u32) * tx_eval_tau;
-        gamma.push(G1.scalar_mul(scalar.num));
+        gamma.push(G1.scalar_mul(scalar.raw()));
     }
 
     (omega, theta, gamma)
 }
 
-fn gf_higher_order(value: i64) -> Fp {
+pub fn gf_higher_order(value: i64) -> Fp {
     Fp::new(value, EC_POINT_MODULUS).unwrap()
 }
 
@@ -63,7 +63,7 @@ fn gf_extension(a: Fp, b: Fp) -> Fp2 {
     Fp2 { a, b }
 }
 
-fn get_default_generators() -> (Point<Fp>, Point<Fp2>) {
+pub fn get_default_generators() -> (Point<Fp>, Point<Fp2>) {
     // For PRIME_ORDER = 157
     // Curve: y² = x³ - 1x - 1
     // ----------------------------------------------------------
@@ -98,4 +98,17 @@ fn get_default_generators() -> (Point<Fp>, Point<Fp2>) {
     .unwrap();
 
     (linear_generator, extension_generator)
+}
+
+pub fn compute_srs<F: Field>(tau: Fp, point: Point<F>, poly_degree: usize) -> Vec<Point<F>> {
+    let mut result = vec![];
+
+    // degree `n` => `n + 1` terms (max)
+    for i in 0..=poly_degree {
+        let t = tau.pow(i as u32);
+
+        result.push(point.scalar_mul(t.raw()));
+    }
+
+    result
 }

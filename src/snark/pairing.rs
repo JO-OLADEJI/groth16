@@ -1,3 +1,3 @@
-// 1. analog_pairing() -> returns my toy pairing
-
-// fn analog_pairing() -> u32 {}
+pub fn analog_pairing() -> u32 {
+    0
+}

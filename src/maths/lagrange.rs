@@ -227,7 +227,7 @@ where
     println!("{}", format!("{} => {}", identifier, poly));
 }
 
-fn to_superscript(s: usize) -> String {
+pub fn to_superscript(s: usize) -> String {
     s.to_string()
         .chars()
         .map(|c| match c {

@@ -1,5 +1,6 @@
 pub mod pairing;
 pub mod proof;
+pub mod proving_key;
 pub mod qap;
 pub mod r1cs;
 pub mod srs;
