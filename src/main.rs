@@ -7,12 +7,12 @@ use cryptography::exercises::finite_field::Fp;
 use crate::{
     maths::lagrange::print_polynomial,
     snark::{
+        key,
         key_utils::fhe_polynomial_eval,
-        proving_key,
         qap::{self, Qap},
         r1cs::{self, gf},
-        verify::{VerificationKey, verify},
-        witness::WITNESS,
+        verify::verify,
+        witness::{PUBLIC_INPUTS, WITNESS},
     },
 };
 
@@ -33,16 +33,18 @@ fn main() {
     print_polynomial(&h_poly, "h(x)");
     print_polynomial(&t_poly, "t(x)");
 
-    let key = proving_key::compute();
+    let (proving_key, verification_key) = key::compute();
 
     // PROOF GENERATION
     // -------------------------------------
-    let a = key.alpha1 + fhe_polynomial_eval(&u_poly, &key.a_srs);
-    let b = key.beta2 + fhe_polynomial_eval(&v_poly, &key.b_srs);
+    let a = proving_key.alpha1 + fhe_polynomial_eval(&u_poly, &proving_key.a_srs);
+    let b = proving_key.beta2 + fhe_polynomial_eval(&v_poly, &proving_key.b_srs);
 
     let witness = WITNESS.into_iter().map(|x| gf(x)).collect::<Vec<Fp>>();
-    let c = fhe_polynomial_eval(&witness, &key.phi1.to_vec())
-        + fhe_polynomial_eval(&h_poly, &key.quotient_srs);
+    let c = fhe_polynomial_eval(
+        &witness[PUBLIC_INPUTS..].to_vec(),
+        &proving_key.private_phi1,
+    ) + fhe_polynomial_eval(&h_poly, &proving_key.quotient_srs);
 
     // VERIFICATION
     // -------------------------------------
@@ -50,16 +52,12 @@ fn main() {
         a.unwrap(),
         b.unwrap(),
         c.unwrap(),
-        VerificationKey {
-            alpha1: key.alpha1,
-            beta2: key.beta2,
-        },
+        &witness[0..PUBLIC_INPUTS].to_vec(),
+        verification_key,
     );
-    println!("is proof correct: {}", check);
+    println!("Groth16 verification => {}", check);
 
     // TODO:
     // -------------------------------------
-    // 1. test prover equation, splitting public & private inputs
-    // 2. encrypt proof using `r` and `s`
-    // 3. generate the proving & verification key in a JSON file
+    // 1. encrypt proof using `r` and `s`
 }

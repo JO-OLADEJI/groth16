@@ -36,3 +36,5 @@ pub static OUT: [[i64; COLS]; ROWS] = [
 ];
 
 pub static WITNESS: [i64; COLS] = [1, 62, 76, 47, 78, 73, 72, 49, 15, 76, 44];
+
+pub static PUBLIC_INPUTS: usize = 3;

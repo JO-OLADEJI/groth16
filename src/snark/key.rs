@@ -6,7 +6,7 @@ use crate::{
         key_utils::{compute_srs, get_default_generators},
         qap::{compute_vanishing_polynomial, interpolate_r1cs_matrices},
         r1cs::gf as gf_subgroup,
-        witness::{COLS, ROWS, SUBGROUP_ORDER},
+        witness::{COLS, PUBLIC_INPUTS, ROWS, SUBGROUP_ORDER},
     },
 };
 use cryptography::{
@@ -33,14 +33,8 @@ pub struct ProvingKey<F: Field, Ex: Field> {
     // [β]₂
     pub beta2: Point<Ex>,
 
-    // [γ]₂
-    pub gamma2: Point<Ex>,
-
-    // [δ]₂
-    pub delta2: Point<Ex>,
-
-    // [Φᵢ ... ]
-    pub phi1: [Point<F>; COLS],
+    // [++l, ... Φₙ]
+    pub private_phi1: Vec<Point<F>>,
 
     // [τⁱ ... ]₁
     pub a_srs: Vec<Point<F>>,
@@ -50,6 +44,23 @@ pub struct ProvingKey<F: Field, Ex: Field> {
 
     // T(x)•τⁱ — used by prover to compute H(x)
     pub quotient_srs: Vec<Point<F>>,
+}
+
+pub struct VerificationKey<F: Field, Ex: Field> {
+    // [α]₁
+    pub alpha1: Point<F>,
+
+    // [β]₂
+    pub beta2: Point<Ex>,
+
+    // [γ]₂
+    pub gamma2: Point<Ex>,
+
+    // [δ]₂
+    pub delta2: Point<Ex>,
+
+    // [Φᵢ ... l]
+    pub public_phi1: Vec<Point<F>>,
 }
 
 fn generate_toxic_waste() -> ToxicWaste {
@@ -70,7 +81,7 @@ fn generate_toxic_waste() -> ToxicWaste {
     }
 }
 
-pub fn compute() -> ProvingKey<Fp, Fp2> {
+pub fn compute() -> (ProvingKey<Fp, Fp2>, VerificationKey<Fp, Fp2>) {
     #[allow(non_snake_case)]
     let (G1, G2) = get_default_generators();
 
@@ -83,27 +94,47 @@ pub fn compute() -> ProvingKey<Fp, Fp2> {
     } = generate_toxic_waste();
 
     let polynomials = interpolate_r1cs_matrices();
-    let mut phi: [Fp; COLS] = std::array::from_fn(|_| gf_subgroup(0));
+    let mut phi: Vec<Fp> = Vec::with_capacity(COLS);
 
     for col in 0..COLS {
         let u_i = poly_eval(polynomials.get_u_poly_at(col), tau);
         let v_i = poly_eval(polynomials.get_v_poly_at(col), tau);
         let w_i = poly_eval(polynomials.get_w_poly_at(col), tau);
 
-        phi[col] = beta.mul(u_i) + alpha.mul(v_i) + w_i;
+        phi.push(beta.mul(u_i) + alpha.mul(v_i) + w_i);
     }
 
-    let vanishing_poly = compute_vanishing_polynomial();
-    let vanishing_poly_eval = poly_eval(&vanishing_poly, tau);
+    let gamma_inverse = gamma.mul_inverse();
+    let delta_inverse = delta.mul_inverse();
 
-    ProvingKey {
+    let public_phi: Vec<Fp> = phi[0..PUBLIC_INPUTS]
+        .iter()
+        .map(|p| *p * gamma_inverse)
+        .collect();
+    let private_phi: Vec<Fp> = phi[PUBLIC_INPUTS..]
+        .iter()
+        .map(|p| *p * delta_inverse)
+        .collect();
+
+    let vanishing_poly = compute_vanishing_polynomial();
+    let vanishing_poly_eval = poly_eval(&vanishing_poly, tau) * delta_inverse;
+
+    let proving_key = ProvingKey {
+        alpha1: G1.scalar_mul(alpha.raw()),
+        beta2: G2.scalar_mul(beta.raw()),
+        private_phi1: private_phi.iter().map(|x| G1.scalar_mul(x.raw())).collect(),
+        a_srs: compute_srs(tau, G1, ROWS - 1),
+        b_srs: compute_srs(tau, G2, ROWS - 1),
+        quotient_srs: compute_srs(tau, G1.scalar_mul(vanishing_poly_eval.raw()), ROWS - 2),
+    };
+
+    let verification_key = VerificationKey {
         alpha1: G1.scalar_mul(alpha.raw()),
         beta2: G2.scalar_mul(beta.raw()),
         gamma2: G2.scalar_mul(gamma.raw()),
         delta2: G2.scalar_mul(delta.raw()),
-        phi1: phi.map(|x| G1.scalar_mul(x.raw())),
-        a_srs: compute_srs(tau, G1, ROWS - 1),
-        b_srs: compute_srs(tau, G2, ROWS - 1),
-        quotient_srs: compute_srs(tau, G1.scalar_mul(vanishing_poly_eval.raw()), ROWS - 2),
-    }
+        public_phi1: public_phi.iter().map(|x| G1.scalar_mul(x.raw())).collect(),
+    };
+
+    (proving_key, verification_key)
 }

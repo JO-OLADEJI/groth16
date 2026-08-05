@@ -9,7 +9,7 @@ use crate::{
 };
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
 
-type Polynomial<F: Field> = Vec<F>;
+type Polynomial<F> = Vec<F>;
 
 impl Literal for Fp {
     fn raw(&self) -> u32 {
