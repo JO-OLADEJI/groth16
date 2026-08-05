@@ -26,38 +26,47 @@ struct ToxicWaste {
     tau: Fp,
 }
 
-pub struct ProvingKey<F: Field, Ex: Field> {
+pub struct ProvingKey<F: Field, F2: Field> {
     // [α]₁
     pub alpha1: Point<F>,
 
+    // [β]₁
+    pub beta1: Point<F>,
+
     // [β]₂
-    pub beta2: Point<Ex>,
+    pub beta2: Point<F2>,
+
+    // [δ]₁
+    pub delta1: Point<F>,
+
+    // [δ]₂
+    pub delta2: Point<F2>,
 
     // [++l, ... Φₙ]
     pub private_phi1: Vec<Point<F>>,
 
     // [τⁱ ... ]₁
-    pub a_srs: Vec<Point<F>>,
+    pub g1_srs: Vec<Point<F>>,
 
     // [τⁱ ... ]₂
-    pub b_srs: Vec<Point<Ex>>,
+    pub g2_srs: Vec<Point<F2>>,
 
     // T(x)•τⁱ — used by prover to compute H(x)
     pub quotient_srs: Vec<Point<F>>,
 }
 
-pub struct VerificationKey<F: Field, Ex: Field> {
+pub struct VerificationKey<F: Field, F2: Field> {
     // [α]₁
     pub alpha1: Point<F>,
 
     // [β]₂
-    pub beta2: Point<Ex>,
+    pub beta2: Point<F2>,
 
     // [γ]₂
-    pub gamma2: Point<Ex>,
+    pub gamma2: Point<F2>,
 
     // [δ]₂
-    pub delta2: Point<Ex>,
+    pub delta2: Point<F2>,
 
     // [Φᵢ ... l]
     pub public_phi1: Vec<Point<F>>,
@@ -121,10 +130,13 @@ pub fn compute() -> (ProvingKey<Fp, Fp2>, VerificationKey<Fp, Fp2>) {
 
     let proving_key = ProvingKey {
         alpha1: G1.scalar_mul(alpha.raw()),
+        beta1: G1.scalar_mul(beta.raw()),
         beta2: G2.scalar_mul(beta.raw()),
+        delta1: G1.scalar_mul(delta.raw()),
+        delta2: G2.scalar_mul(delta.raw()),
         private_phi1: private_phi.iter().map(|x| G1.scalar_mul(x.raw())).collect(),
-        a_srs: compute_srs(tau, G1, ROWS - 1),
-        b_srs: compute_srs(tau, G2, ROWS - 1),
+        g1_srs: compute_srs(tau, G1, ROWS - 1),
+        g2_srs: compute_srs(tau, G2, ROWS - 1),
         quotient_srs: compute_srs(tau, G1.scalar_mul(vanishing_poly_eval.raw()), ROWS - 2),
     };
 
