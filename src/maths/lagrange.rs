@@ -1,4 +1,4 @@
-use crate::snark::proof::SUBGROUP_ORDER;
+use crate::snark::witness::SUBGROUP_ORDER;
 use cryptography::exercises::ec_point::Field;
 
 pub trait Literal {

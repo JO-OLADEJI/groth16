@@ -3,8 +3,8 @@ use crate::{
         Literal, lagrange_interpolate, poly_add, poly_divide, poly_mul, poly_scale, poly_subtract,
     },
     snark::{
-        proof::{COLS, L, OUT, R, ROWS, SUBGROUP_ORDER, WITNESS},
         r1cs::gf,
+        witness::{COLS, L, OUT, R, ROWS, SUBGROUP_ORDER, WITNESS},
     },
 };
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
@@ -18,9 +18,9 @@ impl Literal for Fp {
 }
 
 pub struct Qap {
-    pub l_poly: Vec<Fp>,
-    pub r_poly: Vec<Fp>,
-    pub o_poly: Vec<Fp>,
+    pub u_poly: Vec<Fp>,
+    pub v_poly: Vec<Fp>,
+    pub w_poly: Vec<Fp>,
     pub t_poly: Vec<Fp>,
     pub h_poly: Vec<Fp>,
 }
@@ -31,17 +31,17 @@ pub fn main() -> Qap {
     let u_poly = polynomials.u_poly();
     let v_poly = polynomials.v_poly();
     let w_poly = polynomials.w_poly();
-    let t_poly = compute_vanishing_polynomial();
 
+    let t_poly = compute_vanishing_polynomial();
     let numerator = poly_subtract(&poly_mul(&u_poly, &v_poly), &w_poly);
     let (h_poly, remainder) = poly_divide(&numerator, &t_poly);
 
     assert!(remainder.iter().all(|&x| x.is_zero()));
 
     Qap {
-        l_poly: u_poly,
-        r_poly: v_poly,
-        o_poly: w_poly,
+        u_poly,
+        v_poly,
+        w_poly,
         t_poly,
         h_poly,
     }

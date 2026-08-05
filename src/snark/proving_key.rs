@@ -3,10 +3,10 @@ use std::ops::Mul;
 use crate::{
     maths::lagrange::{Literal, poly_eval},
     snark::{
-        proof::{COLS, ROWS, SUBGROUP_ORDER},
+        key_utils::{compute_srs, get_default_generators},
         qap::{compute_vanishing_polynomial, interpolate_r1cs_matrices},
         r1cs::gf as gf_subgroup,
-        srs::{compute_srs, get_default_generators},
+        witness::{COLS, ROWS, SUBGROUP_ORDER},
     },
 };
 use cryptography::{
@@ -18,7 +18,7 @@ use cryptography::{
 };
 use rand::{self, RngExt};
 
-struct Groth16Scalars {
+struct ToxicWaste {
     alpha: Fp,
     beta: Fp,
     gamma: Fp,
@@ -27,15 +27,32 @@ struct Groth16Scalars {
 }
 
 pub struct ProvingKey<F: Field, Ex: Field> {
-    alpha1: Point<F>,
-    beta2: Point<Ex>,
-    phi1: [Point<F>; COLS],
-    a_srs: Vec<Point<F>>,
-    b_srs: Vec<Point<Ex>>,
-    quotient_srs: Vec<Point<F>>,
+    // [α]₁
+    pub alpha1: Point<F>,
+
+    // [β]₂
+    pub beta2: Point<Ex>,
+
+    // [γ]₂
+    pub gamma2: Point<Ex>,
+
+    // [δ]₂
+    pub delta2: Point<Ex>,
+
+    // [Φᵢ ... ]
+    pub phi1: [Point<F>; COLS],
+
+    // [τⁱ ... ]₁
+    pub a_srs: Vec<Point<F>>,
+
+    // [τⁱ ... ]₂
+    pub b_srs: Vec<Point<Ex>>,
+
+    // T(x)•τⁱ — used by prover to compute H(x)
+    pub quotient_srs: Vec<Point<F>>,
 }
 
-fn generate_groth16_scalars() -> Groth16Scalars {
+fn generate_toxic_waste() -> ToxicWaste {
     let mut rng = rand::rng();
 
     let alpha = rng.random_range(1..SUBGROUP_ORDER);
@@ -44,7 +61,7 @@ fn generate_groth16_scalars() -> Groth16Scalars {
     let delta = rng.random_range(1..SUBGROUP_ORDER);
     let tau = rng.random_range(1..SUBGROUP_ORDER);
 
-    Groth16Scalars {
+    ToxicWaste {
         alpha: gf_subgroup(alpha as i64),
         beta: gf_subgroup(beta as i64),
         gamma: gf_subgroup(gamma as i64),
@@ -53,20 +70,17 @@ fn generate_groth16_scalars() -> Groth16Scalars {
     }
 }
 
-// 1. generate 5 random field elements in subgroup field
-// [α, β, γ, δ, τ]
-// 2. Compute the evaluation of -> β•u(x)ᵢ + α•v(x)ᵢ + w(x)ᵢ
-// 3. Compute the evaluation of T(x)
 pub fn compute() -> ProvingKey<Fp, Fp2> {
     #[allow(non_snake_case)]
     let (G1, G2) = get_default_generators();
-    let Groth16Scalars {
+
+    let ToxicWaste {
         alpha,
         beta,
         gamma,
         delta,
         tau,
-    } = generate_groth16_scalars();
+    } = generate_toxic_waste();
 
     let polynomials = interpolate_r1cs_matrices();
     let mut phi: [Fp; COLS] = std::array::from_fn(|_| gf_subgroup(0));
@@ -83,22 +97,13 @@ pub fn compute() -> ProvingKey<Fp, Fp2> {
     let vanishing_poly_eval = poly_eval(&vanishing_poly, tau);
 
     ProvingKey {
-        // [α]₁
         alpha1: G1.scalar_mul(alpha.raw()),
-
-        // [β]₂
         beta2: G2.scalar_mul(beta.raw()),
-
-        // [Φᵢ ... ]
+        gamma2: G2.scalar_mul(gamma.raw()),
+        delta2: G2.scalar_mul(delta.raw()),
         phi1: phi.map(|x| G1.scalar_mul(x.raw())),
-
-        // [τ² ... ]₁
         a_srs: compute_srs(tau, G1, ROWS - 1),
-
-        // [τ² ... ]₂
         b_srs: compute_srs(tau, G2, ROWS - 1),
-
-        // T(x)•τⁱ — used by prover to compute H(x)
         quotient_srs: compute_srs(tau, G1.scalar_mul(vanishing_poly_eval.raw()), ROWS - 2),
     }
 }

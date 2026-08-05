@@ -1,18 +1,7 @@
-// For PRIME_ORDER = 157
-// Curve: y² = x³ - 1x - 1
-// ----------------------------------------------------------
-// No. of points #E(Fp): 158
-// Potential subgroups order `r` for G1: [2, 79]
-// embedding degrees: {2: Some(1), 79: Some(2)}
-// MODULUS = subgroup order `r` -> 79
-
-// G1 • (39, 54) — 𝔽157
-// G2 • (31 + 153α, 5 + 59α) — 𝔽157²
-
-use crate::snark::proof::{COLS, L, SUBGROUP_ORDER, OUT, R, ROWS, WITNESS};
+use crate::snark::witness::{COLS, L, OUT, R, ROWS, SUBGROUP_ORDER, WITNESS};
 use cryptography::exercises::{ec_point::Field, finite_field::Fp};
 
-pub fn main() {
+pub fn validate() {
     let l: [[Fp; COLS]; ROWS] = L.map(|row| row.map(|x| gf(x)));
     let r: [[Fp; COLS]; ROWS] = R.map(|row| row.map(|y| gf(y)));
     let out: [[Fp; COLS]; ROWS] = OUT.map(|row| row.map(|z| gf(z)));
