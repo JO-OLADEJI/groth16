@@ -11,7 +11,7 @@ use crate::{
     snark::witness::{EC_POINT_MODULUS, EcCurve},
 };
 
-fn gf_higher_order(value: i64) -> Fp {
+pub fn gf_higher_order(value: i64) -> Fp {
     Fp::new(value, EC_POINT_MODULUS).unwrap()
 }
 

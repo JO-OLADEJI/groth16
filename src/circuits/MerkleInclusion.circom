@@ -21,7 +21,7 @@ template MerkleInclusion() {
 
     hashes[0] = Hash();
     hashes[0].l <== in[0];
-    hashes[0].r <== in[1];
+    hashes[0].r <== in[1]; // hashes[0].out
     lFlags[0] <-- 0;
     rFlags[0] <-- 0;
 
@@ -70,7 +70,7 @@ template Hash() {
     signal input r;
     signal output out;
 
-    var cHash = (l * l) + (3 * r);
+    var cHash = (l * l) + (3 * r); // hash fn = l² + 3r
     out <== cHash;
 }
 
